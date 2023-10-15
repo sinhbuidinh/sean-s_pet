@@ -1,0 +1,46 @@
+version: "3.7"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
+    image: sean-pet-app
+    container_name: sean-pet-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+      - ./docker/supervisor.dev.conf:/etc/supervisord.conf
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/app.ini
+      - ./docker/www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - ./docker/nginx.conf:/etc/nginx/sites-enabled/default
+    ports:
+      - 8081:80
+    entrypoint: [bash, ./docker/run.dev.sh]
+    networks:
+      - default
+  db:
+    image: mariadb:10
+    container_name: sean-pet-db
+    restart: unless-stopped
+    ports:
+      - 3307:3306
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./:/var/www
+    networks:
+      - default
+
+networks:
+  default:
+    name: sean-pet-network
+
+volumes:
+  dbdata:
+    driver: local
